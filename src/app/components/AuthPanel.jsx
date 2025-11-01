@@ -9,9 +9,10 @@ import 'swiper/css/effect-fade';
 
 export default function AuthPanel() {
   const slides = [
-    { bg: '#D1E8E2', text: 'Sustainable by Design 🌱' },
-    { bg: '#A3E4A6', text: 'Clean Energy, Clean Code ⚡' },
-    { bg: '#E8F5E9', text: 'Nature Meets Tech 🌿' },
+    { bg: '/loginCar1.png' },
+    { bg: '/loginCar2.png' },
+    { bg: '/loginCar3.png'},
+    { bg: '/loginCar4.png'},
   ];
 
   return (
@@ -19,8 +20,8 @@ export default function AuthPanel() {
       {/* LEFT: Clerk SignUp */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 bg-white  ">
         <div className="w-full max-w-md">
-          <div className="mb-6">
-            <h1 className="text-3xl font-semibold text-eco-dark">Join EcoApp</h1>
+          <div className="mb-6 text-[#212121]">
+            <h1 className="text-3xl font-semibold text-eco-dark">Join GreenLens</h1>
             <p className="text-sm text-gray-500"> {`Create an account — it's fast and secure.`} </p>
           </div>
           <div className="bg-white rounded-xl shadow-lg p-6 border border-emerald-50">
@@ -58,23 +59,19 @@ export default function AuthPanel() {
           effect="fade"
           autoplay={{ delay: 3000, disableOnInteraction: false }}
           loop
-          className="h-full w-full"
+          className="h-full w-full flex justify-center items-center bg-[#A5D6A7] "
         >
           {slides.map((slide, idx) => (
-            <SwiperSlide key={idx}>
-              <div
-                className="h-full flex items-center justify-center p-8 text-center"
-                style={{ backgroundColor: slide.bg }}
-              >
-                <div className="max-w-lg">
-                  <h2 className="text-3xl md:text-4xl font-semibold text-eco-dark">{slide.text}</h2>
-                  <p className="mt-4 text-gray-700">
-                    Minimal, modern UI — placeholder slides for now.
-                  </p>
-                </div>
-              </div>
-            </SwiperSlide>
-          ))}
+          <SwiperSlide key={idx}>
+          <div
+            className="relative h-[75%] aspect-4/5   top-[50%] left-[50%] translate-[-50%] bg-center bg-cover rounded-3xl shadow-lg"
+            style={{
+              backgroundImage: `url(${slide.bg})`,
+            }}
+            ></div>
+          </SwiperSlide>
+))}
+
         </Swiper>
       </div>
     </div>
