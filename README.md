@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# GreenLens – Track, Earn, and Give Back to the Planet 🌱
 
-## Getting Started
+*GreenLens* is an intelligent sustainability platform that helps users understand, track, and reduce their environmental impact. By manually logging daily activities such as travel, energy consumption, and shopping habits, users earn *Green Tokens* for verified eco-friendly actions. Tokens can be redeemed for eco-friendly products or donated to verified NGOs, turning small actions into real-world environmental impact.  
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🌟 Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- *Track Daily Activities:*  
+  Users manually log travel distance, electricity usage, shopping habits, and solar power generation. Optional bill/receipt uploads are processed using *Google Cloud Document AI* for accurate data extraction.  
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- *ML-Powered Verification:*  
+  An *XGBoost model* validates submitted activities to ensure fair token assignment.  
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- *Blockchain Token Management:*  
+  Verified eco-friendly actions trigger *Green Token minting* via a *Solidity smart contract* on the *Sepolia testnet*, providing secure and transparent reward tracking.  
 
-## Learn More
+- *Redeem Tokens:*  
+  Users can redeem tokens for eco-friendly products or donate to verified NGOs. All redemptions are recorded on the blockchain for transparency.  
 
-To learn more about Next.js, take a look at the following resources:
+- *AI Chatbot Assistance:*  
+  An intelligent chatbot powered by *OpenAI SDK & Generative AI* helps users log activities, answer sustainability questions, and suggest eco-friendly actions.  
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- *Interactive Dashboard:*  
+  Users can track token balance, transaction history, leaderboard ranking, and overall environmental impact through a clean *React + TailwindCSS* interface.  
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🛠 Tech Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+*Frontend:*  
+- React  
+- TailwindCSS  
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*Backend:*  
+- Node.js + Express  
+- MongoDB  
+
+*AI / ML:*  
+- Python (Flask/FastAPI)  
+- XGBoost (activity verification)  
+- Google Cloud Document AI (OCR extraction)  
+
+*Blockchain:*  
+- Solidity Smart Contracts  
+- Ethereum Sepolia Testnet  
+
+*Deployment / Hosting:*  
+- Vercel (Frontend)  
+- Render (Backend)  
+
+*Other Tools:*  
+- OpenAI SDK & Generative AI (Chatbot)  
+- REST / JSON APIs  
+
+---
+
+## ⚡ Workflow
+
+1. *Track Activities:*  
+   Users log sustainable actions or upload receipts/bills.  
+
+2. *Verify Actions:*  
+   ML model checks the validity of submitted data.  
+
+3. *Mint Green Tokens:*  
+   Verified actions are rewarded via blockchain smart contracts.  
+
+4. *Redeem Tokens:*  
+   Tokens can be spent on eco-friendly products or donated to NGOs.  
+
+5. *Track Impact:*  
+   Dashboard shows token balance, leaderboard, and contribution history.  
+
+---
+
+## 💚 Impact
+
+GreenLens empowers individuals to take actionable steps toward sustainability while supporting NGOs and eco-startups. By merging blockchain transparency, ML verification, and gamified rewards, GreenLens turns climate awareness into measurable, real-world impact.  
+
+---
+
+## 📥 Installation
+
+1. Clone the repo:  
+   ```bash
+   git clone https://github.com/your-username/greenlens.git
