@@ -139,7 +139,7 @@ export default function SolarForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-200 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-200 py-12 px-4 text-amber-700">
       <motion.div
         className="max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl p-8"
         initial={{ opacity: 0, y: 40 }}
