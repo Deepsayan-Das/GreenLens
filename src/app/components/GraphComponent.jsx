@@ -22,7 +22,7 @@ export default function GraphComponent() {
   const currentMonthTokens = monthlyTokens[monthlyTokens.length - 1].tokens;
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-[#A5D6A7] to-[#E8F5E9] p-8">
+    <div className="min-h-screen w-full bg-gradient-to-b from-[#A5D6A7] to-[#E8F5E9] p-8 mt-6 rounded-2xl shadow-2xl">
       <h1 className="text-3xl font-bold mb-6 text-emerald-900">
         Your previous activities
       </h1>

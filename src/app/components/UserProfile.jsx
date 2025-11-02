@@ -4,8 +4,12 @@ import { useUser, UserButton } from '@clerk/nextjs';
 import { Mail, Phone, Coins, Edit, TrendingUp, Award, Zap, Sun, Car, Trees, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 import GraphComponent from '../components/GraphComponent';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
 
 export default function UserProfile() {
+  const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
   const [greenTokens] = useState(2450); // Mock token data
 
@@ -103,17 +107,22 @@ export default function UserProfile() {
                 <h3 className="text-lg font-semibold">Green Tokens</h3>
                 <Coins className="w-6 h-6" />
               </div>
-              <div className="text-4xl font-bold mb-6">{greenTokens.toLocaleString()}</div>
+              <div className="text-4xl font-bold mb-6 shadow-2xl">{greenTokens.toLocaleString()}</div>
               
               <div className="space-y-3">
-                <button className="w-full py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+                <Link href='/store '  >
+                <button className="w-full  py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
                   <Award className="w-5 h-5" />
                   Redeem Tokens
                 </button>
-                <button className="w-full py-3 bg-white text-emerald-700 hover:bg-emerald-50 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+                </Link>
+                <Link href='/submit'>
+                <button className="w-full mt-4 py-3 bg-white text-emerald-700 hover:bg-emerald-50 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
                   <TrendingUp className="w-5 h-5" />
                   Earn More Tokens
                 </button>
+                </Link>
+                
               </div>
             </div>
           </div>
@@ -130,7 +139,7 @@ export default function UserProfile() {
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Electricity Form */}
-                <button className="p-4 border-2 border-yellow-300 hover:border-yellow-500 rounded-xl transition-all hover:shadow-lg group">
+                <button onClick={()=>{router.push('/submit/electricity-form')}} className="p-4 border-2 border-yellow-300 hover:border-yellow-500 rounded-xl transition-all hover:shadow-lg group">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
                       <Zap className="w-6 h-6 text-yellow-600" />
@@ -143,7 +152,7 @@ export default function UserProfile() {
                 </button>
 
                 {/* Solar Form */}
-                <button className="p-4 border-2 border-orange-300 hover:border-orange-500 rounded-xl transition-all hover:shadow-lg group">
+                <button onClick={()=>{router.push('/submit/solar-form')}} className="p-4 border-2 border-orange-300 hover:border-orange-500 rounded-xl transition-all hover:shadow-lg group">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center group-hover:bg-orange-200 transition-colors">
                       <Sun className="w-6 h-6 text-orange-600" />
@@ -156,7 +165,7 @@ export default function UserProfile() {
                 </button>
 
                 {/* Transport Form */}
-                <button className="p-4 border-2 border-blue-300 hover:border-blue-500 rounded-xl transition-all hover:shadow-lg group">
+                <button onClick={()=>{router.push('/submit/transport-form')}} className="p-4 border-2 border-blue-300 hover:border-blue-500 rounded-xl transition-all hover:shadow-lg group">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition-colors">
                       <Car className="w-6 h-6 text-blue-600" />
@@ -169,7 +178,7 @@ export default function UserProfile() {
                 </button>
 
                 {/* Plantation Form */}
-                <button className="p-4 border-2 border-green-300 hover:border-green-500 rounded-xl transition-all hover:shadow-lg group">
+                <button onClick={()=>{router.push('/submit/plantation-form')}} className="p-4 border-2 border-green-300 hover:border-green-500 rounded-xl transition-all hover:shadow-lg group">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center group-hover:bg-green-200 transition-colors">
                       <Trees className="w-6 h-6 text-green-700" />
@@ -182,7 +191,7 @@ export default function UserProfile() {
                 </button>
 
                 {/* Purchase Form */}
-                <button className="p-4 border-2 border-purple-300 hover:border-purple-500 rounded-xl transition-all hover:shadow-lg group sm:col-span-2">
+                <button onClick={()=>{router.push('/submit/purchase-form')}} className="p-4 border-2 border-purple-300 hover:border-purple-500 rounded-xl transition-all hover:shadow-lg group sm:col-span-2">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center group-hover:bg-purple-200 transition-colors">
                       <ShoppingCart className="w-6 h-6 text-purple-600" />

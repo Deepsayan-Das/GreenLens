@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ChevronsDown } from 'lucide-react';
 import MouseFollower from './MouseFollower';
+import Link from 'next/link';
 
 function Hero() {
 
@@ -119,13 +120,17 @@ useEffect(() => {
           <h4 className="text-black text-2xl font-light mt-4 w-[90%]">
             GreenLens helps you measure your daily carbon footprint and reward eco-friendly choices.
           </h4>
-          <button
+        <Link to='/auth' href='/auth' className='h-[10%]'>
+        <button
             ref={buttonRef}
-            className="h-[10%] w-[40%] bg-transparent border-2 border-black rounded-full mt-8 text-black text-xl font-medium hover:bg-black hover:text-white transition-all duration-300 ease-in-out pointer-events-auto z-10"
+            className="h-full w-[40%] bg-transparent border-2 border-black rounded-full mt-8 text-black text-xl font-medium hover:bg-black hover:text-white transition-all duration-300 ease-in-out pointer-events-auto z-10"
           >
             Get Started
           </button>
-        </div>
+       
+        </Link>
+         </div>
+          
 
         {/* Right Section */}
         <div

@@ -6,7 +6,7 @@ const ProductCard = ({ product }) => {
   const router = useRouter();
 
   const handleClick = () => {
-    router.push('/submit');
+    router.push('/redeem');
   };
 
   const cardStyle = {
