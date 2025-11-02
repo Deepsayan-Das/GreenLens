@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import { Car, Bike, Bus, CheckCircle } from 'lucide-react';
+import { Car, Bike, Bus, CheckCircle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 export default function TransportForm() {
@@ -13,17 +13,162 @@ export default function TransportForm() {
     vehicleNumber: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
+  const [account, setAccount] = useState(null);
 
-  const handleSubmit = () => {
-    const submitData = {
-      isEV,
-      vehicleType,
-      ...formData,
-      odometerReading: ['cycle', 'public'].includes(vehicleType) ? null : formData.odometerReading
-    };
-    console.log('Transport Data Submitted:', submitData);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+  // Connect wallet function
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        setAccount(accounts[0]);
+        return accounts[0];
+      } catch (error) {
+        console.error("Error connecting wallet:", error);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const mintTokens = async (connectedAccount) => {
+    try {
+      console.log("Minting tokens to:", connectedAccount);
+      
+      // Import ethers dynamically
+      const { ethers } = await import('ethers');
+      
+      // You'll need to provide your contract ABI and address
+      const contractAddress = "YOUR_CONTRACT_ADDRESS";
+      const contractABI = [
+        "function mint(address to, uint256 amount) public"
+      ];
+
+      if (!window.ethereum) {
+        throw new Error("MetaMask not found");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+      // Verify contract is deployed
+      const code = await provider.getCode(contractAddress);
+      if (code === '0x' || code === '0x0') {
+        throw new Error("Contract not deployed on current network. Please switch to the correct network.");
+      }
+
+      console.log("Minting 50 tokens...");
+      const tx = await contract.mint(connectedAccount, ethers.parseUnits("50", 18));
+      console.log("Transaction sent:", tx.hash);
+      
+      await tx.wait();
+      console.log("Transaction confirmed!");
+      
+      return true;
+    } catch (error) {
+      console.error("Error minting:", error);
+      
+      let errorMsg = "Failed to mint tokens";
+      if (error.message.includes("not deployed")) {
+        errorMsg = "Contract not deployed. Please check your network.";
+      } else if (error.code === "ACTION_REJECTED") {
+        errorMsg = "Transaction rejected by user";
+      } else if (error.message.includes("insufficient funds")) {
+        errorMsg = "Insufficient funds for gas";
+      }
+      
+      throw new Error(errorMsg);
+    }
+  };
+
+  const validateForm = () => {
+    if (isEV === null) {
+      alert("⚠️ Please select if your vehicle is electric");
+      return false;
+    }
+
+    if (!vehicleType) {
+      alert("⚠️ Please select a vehicle type");
+      return false;
+    }
+
+    // For cycle and public transport, less validation needed
+    if (['cycle', 'public-transport'].includes(vehicleType)) {
+      return true;
+    }
+
+    // For other vehicles, check required fields
+    if (!formData.vehicleModel || !formData.vehicleNumber || !formData.odometerReading) {
+      alert("⚠️ Please fill in all vehicle details");
+      return false;
+    }
+
+    // If EV, check battery capacity
+    if (isEV && !formData.evCapacity) {
+      alert("⚠️ Please enter battery capacity");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsMinting(true);
+
+    try {
+      // Connect wallet if not connected
+      let walletAccount = account;
+      if (!walletAccount) {
+        walletAccount = await connectWallet();
+        if (!walletAccount) {
+          alert("⚠️ Please connect your wallet first!");
+          setIsMinting(false);
+          return;
+        }
+      }
+
+      // Prepare submit data
+      const submitData = {
+        isEV,
+        vehicleType,
+        ...formData,
+        odometerReading: ['cycle', 'public-transport'].includes(vehicleType) ? null : formData.odometerReading
+      };
+
+      // Log transport data
+      console.log('Transport Data Submitted:', submitData);
+
+      // Mint tokens
+      await mintTokens(walletAccount);
+      
+      // Success!
+      alert("✅ Transport data submitted and 50 Green Tokens minted successfully!");
+      setSubmitted(true);
+      
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        setSubmitted(false);
+        setIsEV(null);
+        setVehicleType('');
+        setFormData({
+          evCapacity: '',
+          odometerReading: '',
+          vehicleModel: '',
+          vehicleNumber: ''
+        });
+      }, 3000);
+
+    } catch (error) {
+      alert(`❌ ${error.message}`);
+    } finally {
+      setIsMinting(false);
+    }
   };
 
   return (
@@ -202,16 +347,21 @@ export default function TransportForm() {
           <motion.button
             type="button"
             onClick={handleSubmit}
-            disabled={!vehicleType}
-            whileHover={{ scale: vehicleType ? 1.02 : 1 }}
-            whileTap={{ scale: vehicleType ? 0.98 : 1 }}
+            disabled={!vehicleType || isMinting || submitted}
+            whileHover={{ scale: vehicleType && !isMinting ? 1.02 : 1 }}
+            whileTap={{ scale: vehicleType && !isMinting ? 0.98 : 1 }}
             className={`w-full py-4 rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 transition-all ${
-              vehicleType
+              vehicleType && !isMinting && !submitted
                 ? 'bg-gradient-to-r from-blue-700 to-cyan-800 text-white cursor-pointer'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
-            {submitted ? (
+            {isMinting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Minting Tokens...
+              </>
+            ) : submitted ? (
               <>
                 <CheckCircle className="w-5 h-5" />
                 Submitted Successfully!
@@ -224,7 +374,7 @@ export default function TransportForm() {
 
         <div className="mt-6 p-4 bg-blue-50 rounded-xl">
           <p className="text-sm text-blue-900">
-            🚗 <strong>Token Reward:</strong> Higher rewards for EVs, cycles, and public transport!
+            🚗 <strong>Token Reward:</strong> Earn 50 tokens! Higher rewards for EVs, cycles, and public transport!
           </p>
         </div>
       </motion.div>

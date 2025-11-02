@@ -68,7 +68,7 @@ export default function Page() {
 
     return () => {
       lenis.destroy();
-      ScrollTrigger.kill();
+      ScrollTrigger.getAll().forEach(t => t.kill());
       document.querySelectorAll('a[href^="#"]').forEach((a) =>
         a.removeEventListener('click', handleAnchorClick)
       );

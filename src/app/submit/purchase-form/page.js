@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Upload, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Upload, CheckCircle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 export default function PurchaseForm() {
@@ -24,6 +24,23 @@ export default function PurchaseForm() {
     proofFile: null
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
+  const [account, setAccount] = useState(null);
+
+  // Connect wallet function
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        setAccount(accounts[0]);
+        return accounts[0];
+      } catch (error) {
+        console.error("Error connecting wallet:", error);
+        return null;
+      }
+    }
+    return null;
+  };
 
   const handleFileChange = (e, fileType) => {
     if (e.target.files && e.target.files[0]) {
@@ -31,10 +48,141 @@ export default function PurchaseForm() {
     }
   };
 
-  const handleSubmit = () => {
-    console.log('Purchase Data Submitted:', { purchaseType, ...formData });
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+  const mintTokens = async (connectedAccount) => {
+    try {
+      console.log("Minting tokens to:", connectedAccount);
+      
+      // Import ethers dynamically
+      const { ethers } = await import('ethers');
+      
+      // You'll need to provide your contract ABI and address
+      const contractAddress = "YOUR_CONTRACT_ADDRESS";
+      const contractABI = [
+        "function mint(address to, uint256 amount) public"
+      ];
+
+      if (!window.ethereum) {
+        throw new Error("MetaMask not found");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+      // Verify contract is deployed
+      const code = await provider.getCode(contractAddress);
+      if (code === '0x' || code === '0x0') {
+        throw new Error("Contract not deployed on current network. Please switch to the correct network.");
+      }
+
+      console.log("Minting 50 tokens...");
+      const tx = await contract.mint(connectedAccount, ethers.parseUnits("50", 18));
+      console.log("Transaction sent:", tx.hash);
+      
+      await tx.wait();
+      console.log("Transaction confirmed!");
+      
+      return true;
+    } catch (error) {
+      console.error("Error minting:", error);
+      
+      let errorMsg = "Failed to mint tokens";
+      if (error.message.includes("not deployed")) {
+        errorMsg = "Contract not deployed. Please check your network.";
+      } else if (error.code === "ACTION_REJECTED") {
+        errorMsg = "Transaction rejected by user";
+      } else if (error.message.includes("insufficient funds")) {
+        errorMsg = "Insufficient funds for gas";
+      }
+      
+      throw new Error(errorMsg);
+    }
+  };
+
+  const validateForm = () => {
+    if (!purchaseType) {
+      alert("⚠️ Please select a purchase type");
+      return false;
+    }
+
+    if (purchaseType === 'solar') {
+      if (!formData.solarCompany || !formData.panelCapacity || 
+          !formData.numberOfPanels || !formData.installationDate) {
+        alert("⚠️ Please fill in all solar panel fields");
+        return false;
+      }
+    }
+
+    if (purchaseType === 'ev') {
+      if (!formData.evBrand || !formData.evModel || !formData.batteryCapacity || 
+          !formData.purchaseDate || !formData.vehicleNumber) {
+        alert("⚠️ Please fill in all EV fields");
+        return false;
+      }
+    }
+
+    if (!formData.invoiceFile || !formData.proofFile) {
+      alert("⚠️ Please upload both invoice and proof photo");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsMinting(true);
+
+    try {
+      // Connect wallet if not connected
+      let walletAccount = account;
+      if (!walletAccount) {
+        walletAccount = await connectWallet();
+        if (!walletAccount) {
+          alert("⚠️ Please connect your wallet first!");
+          setIsMinting(false);
+          return;
+        }
+      }
+
+      // Log purchase data
+      console.log('Purchase Data Submitted:', { purchaseType, ...formData });
+
+      // Mint tokens
+      await mintTokens(walletAccount);
+      
+      // Success!
+      alert("✅ Purchase submitted and 50 Green Tokens minted successfully!");
+      setSubmitted(true);
+      
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        setSubmitted(false);
+        setPurchaseType('');
+        setFormData({
+          solarCompany: '',
+          panelCapacity: '',
+          numberOfPanels: '',
+          installationDate: '',
+          evBrand: '',
+          evModel: '',
+          batteryCapacity: '',
+          purchaseDate: '',
+          vehicleNumber: '',
+          invoiceFile: null,
+          proofFile: null
+        });
+      }, 3000);
+
+    } catch (error) {
+      alert(`❌ ${error.message}`);
+    } finally {
+      setIsMinting(false);
+    }
   };
 
   return (
@@ -302,16 +450,21 @@ export default function PurchaseForm() {
           <motion.button
             type="button"
             onClick={handleSubmit}
-            disabled={!purchaseType}
-            whileHover={{ scale: purchaseType ? 1.02 : 1 }}
-            whileTap={{ scale: purchaseType ? 0.98 : 1 }}
+            disabled={!purchaseType || isMinting || submitted}
+            whileHover={{ scale: purchaseType && !isMinting ? 1.02 : 1 }}
+            whileTap={{ scale: purchaseType && !isMinting ? 0.98 : 1 }}
             className={`w-full py-4 rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 transition-all ${
-              purchaseType
+              purchaseType && !isMinting && !submitted
                 ? 'bg-gradient-to-r from-purple-700 to-indigo-800 text-white cursor-pointer'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
-            {submitted ? (
+            {isMinting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Minting Tokens...
+              </>
+            ) : submitted ? (
               <>
                 <CheckCircle className="w-5 h-5" />
                 Submitted Successfully!
@@ -324,7 +477,7 @@ export default function PurchaseForm() {
 
         <div className="mt-6 p-4 bg-purple-50 rounded-xl">
           <p className="text-sm text-purple-900">
-            🎁 <strong>Token Reward:</strong> Earn significant bonus tokens for investing in sustainable technology!
+            🎁 <strong>Token Reward:</strong> Earn 50 bonus tokens for investing in sustainable technology!
           </p>
         </div>
       </motion.div>

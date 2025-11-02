@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import { Trees, Upload, CheckCircle, Plus, X } from 'lucide-react';
+import { Trees, Upload, CheckCircle, Plus, X, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 export default function PlantationForm() {
@@ -11,6 +11,23 @@ export default function PlantationForm() {
     imageFile: null
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
+  const [account, setAccount] = useState(null);
+
+  // Connect wallet function (you'll need to call this elsewhere or on mount)
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        setAccount(accounts[0]);
+        return accounts[0];
+      } catch (error) {
+        console.error("Error connecting wallet:", error);
+        return null;
+      }
+    }
+    return null;
+  };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -33,14 +50,113 @@ export default function PlantationForm() {
     setFormData({ ...formData, treeTypes: newTypes });
   };
 
-  const handleSubmit = () => {
-    console.log('Plantation Data Submitted:', formData);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+  const mintTokens = async (connectedAccount) => {
+    try {
+      console.log("Minting tokens to:", connectedAccount);
+      
+      // Import ethers dynamically
+      const { ethers } = await import('ethers');
+      
+      // You'll need to provide your contract ABI and address
+      const contractAddress = "YOUR_CONTRACT_ADDRESS";
+      const contractABI = [
+        "function mint(address to, uint256 amount) public"
+      ];
+
+      if (!window.ethereum) {
+        throw new Error("MetaMask not found");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+      // Verify contract is deployed
+      const code = await provider.getCode(contractAddress);
+      if (code === '0x' || code === '0x0') {
+        throw new Error("Contract not deployed on current network. Please switch to the correct network.");
+      }
+
+      console.log("Minting 50 tokens...");
+      const tx = await contract.mint(connectedAccount, ethers.parseUnits("50", 18));
+      console.log("Transaction sent:", tx.hash);
+      
+      await tx.wait();
+      console.log("Transaction confirmed!");
+      
+      return true;
+    } catch (error) {
+      console.error("Error minting:", error);
+      
+      let errorMsg = "Failed to mint tokens";
+      if (error.message.includes("not deployed")) {
+        errorMsg = "Contract not deployed. Please check your network.";
+      } else if (error.code === "ACTION_REJECTED") {
+        errorMsg = "Transaction rejected by user";
+      } else if (error.message.includes("insufficient funds")) {
+        errorMsg = "Insufficient funds for gas";
+      }
+      
+      throw new Error(errorMsg);
+    }
+  };
+
+  const handleSubmit = async () => {
+    // Validate form
+    if (!formData.numberOfTrees || !formData.location || !formData.imageFile) {
+      alert("⚠️ Please fill in all required fields");
+      return;
+    }
+
+    if (formData.treeTypes.some(type => !type.trim())) {
+      alert("⚠️ Please fill in all tree types");
+      return;
+    }
+
+    setIsMinting(true);
+
+    try {
+      // Connect wallet if not connected
+      let walletAccount = account;
+      if (!walletAccount) {
+        walletAccount = await connectWallet();
+        if (!walletAccount) {
+          alert("⚠️ Please connect your wallet first!");
+          setIsMinting(false);
+          return;
+        }
+      }
+
+      // Log plantation data
+      console.log('Plantation Data Submitted:', formData);
+
+      // Mint tokens
+      await mintTokens(walletAccount);
+      
+      // Success!
+      alert("✅ Plantation submitted and 50 Green Tokens minted successfully!");
+      setSubmitted(true);
+      
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        setSubmitted(false);
+        setFormData({
+          numberOfTrees: '',
+          location: '',
+          treeTypes: [''],
+          imageFile: null
+        });
+      }, 3000);
+
+    } catch (error) {
+      alert(`❌ ${error.message}`);
+    } finally {
+      setIsMinting(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-green-300 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-green-300 py-12 px-4 text-green-700">
       <motion.div
         className="max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl p-8"
         initial={{ opacity: 0, y: 40 }}
@@ -157,11 +273,17 @@ export default function PlantationForm() {
           <motion.button
             type="button"
             onClick={handleSubmit}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full py-4 bg-gradient-to-r from-green-700 to-emerald-800 text-white rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2"
+            disabled={isMinting || submitted}
+            whileHover={{ scale: isMinting ? 1 : 1.02 }}
+            whileTap={{ scale: isMinting ? 1 : 0.98 }}
+            className="w-full py-4 bg-gradient-to-r from-green-700 to-emerald-800 text-white rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {submitted ? (
+            {isMinting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Minting Tokens...
+              </>
+            ) : submitted ? (
               <>
                 <CheckCircle className="w-5 h-5" />
                 Submitted Successfully!
@@ -174,7 +296,7 @@ export default function PlantationForm() {
 
         <div className="mt-6 p-4 bg-green-50 rounded-xl">
           <p className="text-sm text-green-900">
-            🌳 <strong>Token Reward:</strong> Earn tokens for each tree planted. Native species earn bonus rewards!
+            🌳 <strong>Token Reward:</strong> Earn 50 tokens for each successful submission. Native species earn bonus rewards!
           </p>
         </div>
       </motion.div>

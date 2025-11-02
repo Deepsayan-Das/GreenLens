@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import { Sun, Upload, CheckCircle } from 'lucide-react';
+import { Sun, Upload, CheckCircle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 export default function SolarForm() {
@@ -12,6 +12,23 @@ export default function SolarForm() {
     billFile: null
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
+  const [account, setAccount] = useState(null);
+
+  // Connect wallet function
+  const connectWallet = async () => {
+    if (window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        setAccount(accounts[0]);
+        return accounts[0];
+      } catch (error) {
+        console.error("Error connecting wallet:", error);
+        return null;
+      }
+    }
+    return null;
+  };
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -19,10 +36,106 @@ export default function SolarForm() {
     }
   };
 
-  const handleSubmit = () => {
-    console.log('Solar Power Data Submitted:', formData);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+  const mintTokens = async (connectedAccount) => {
+    try {
+      console.log("Minting tokens to:", connectedAccount);
+      
+      // Import ethers dynamically
+      const { ethers } = await import('ethers');
+      
+      // You'll need to provide your contract ABI and address
+      const contractAddress = "YOUR_CONTRACT_ADDRESS";
+      const contractABI = [
+        "function mint(address to, uint256 amount) public"
+      ];
+
+      if (!window.ethereum) {
+        throw new Error("MetaMask not found");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(contractAddress, contractABI, signer);
+
+      // Verify contract is deployed
+      const code = await provider.getCode(contractAddress);
+      if (code === '0x' || code === '0x0') {
+        throw new Error("Contract not deployed on current network. Please switch to the correct network.");
+      }
+
+      console.log("Minting 50 tokens...");
+      const tx = await contract.mint(connectedAccount, ethers.parseUnits("50", 18));
+      console.log("Transaction sent:", tx.hash);
+      
+      await tx.wait();
+      console.log("Transaction confirmed!");
+      
+      return true;
+    } catch (error) {
+      console.error("Error minting:", error);
+      
+      let errorMsg = "Failed to mint tokens";
+      if (error.message.includes("not deployed")) {
+        errorMsg = "Contract not deployed. Please check your network.";
+      } else if (error.code === "ACTION_REJECTED") {
+        errorMsg = "Transaction rejected by user";
+      } else if (error.message.includes("insufficient funds")) {
+        errorMsg = "Insufficient funds for gas";
+      }
+      
+      throw new Error(errorMsg);
+    }
+  };
+
+  const handleSubmit = async () => {
+    // Validate form
+    if (!formData.company || !formData.unitsGenerated || !formData.homeType || 
+        !formData.carpetArea || !formData.billFile) {
+      alert("⚠️ Please fill in all required fields");
+      return;
+    }
+
+    setIsMinting(true);
+
+    try {
+      // Connect wallet if not connected
+      let walletAccount = account;
+      if (!walletAccount) {
+        walletAccount = await connectWallet();
+        if (!walletAccount) {
+          alert("⚠️ Please connect your wallet first!");
+          setIsMinting(false);
+          return;
+        }
+      }
+
+      // Log solar power data
+      console.log('Solar Power Data Submitted:', formData);
+
+      // Mint tokens
+      await mintTokens(walletAccount);
+      
+      // Success!
+      alert("✅ Solar power data submitted and 50 Green Tokens minted successfully!");
+      setSubmitted(true);
+      
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        setSubmitted(false);
+        setFormData({
+          company: '',
+          unitsGenerated: '',
+          homeType: '',
+          carpetArea: '',
+          billFile: null
+        });
+      }, 3000);
+
+    } catch (error) {
+      alert(`❌ ${error.message}`);
+    } finally {
+      setIsMinting(false);
+    }
   };
 
   return (
@@ -136,11 +249,17 @@ export default function SolarForm() {
           <motion.button
             type="button"
             onClick={handleSubmit}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full py-4 bg-gradient-to-r from-amber-700 to-orange-800 text-white rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2"
+            disabled={isMinting || submitted}
+            whileHover={{ scale: isMinting ? 1 : 1.02 }}
+            whileTap={{ scale: isMinting ? 1 : 0.98 }}
+            className="w-full py-4 bg-gradient-to-r from-amber-700 to-orange-800 text-white rounded-xl font-semibold shadow-lg flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {submitted ? (
+            {isMinting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Minting Tokens...
+              </>
+            ) : submitted ? (
               <>
                 <CheckCircle className="w-5 h-5" />
                 Submitted Successfully!
@@ -153,7 +272,7 @@ export default function SolarForm() {
 
         <div className="mt-6 p-4 bg-amber-50 rounded-xl">
           <p className="text-sm text-amber-900">
-            ☀️ <strong>Token Reward:</strong> Earn bonus tokens for every kWh of clean solar energy generated!
+            ☀️ <strong>Token Reward:</strong> Earn 50 bonus tokens for every submission of clean solar energy generated!
           </p>
         </div>
       </motion.div>
